@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="newNoteButton" type="id" />
+    <item name="noteListView" type="id" />
+    <item name="doneButton" type="id" />
+    <item name="titleEditText" type="id" />
+    <item name="labelSpinner" type="id" />
+    <item name="contentEditText" type="id" />
 </resources>
