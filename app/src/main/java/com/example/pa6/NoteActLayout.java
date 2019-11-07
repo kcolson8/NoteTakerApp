@@ -67,7 +67,7 @@ public class NoteActLayout extends GridLayout {
         Button doneButton = new Button(context);
         doneButton.setId(R.id.doneButton);
         doneButton.setText("Done");
-        GridLayout.Spec buttonRowSpec = GridLayout.spec(2,1,1);
+        GridLayout.Spec buttonRowSpec = GridLayout.spec(2,1,0);
         GridLayout.Spec buttonColSpec = GridLayout.spec(0,2,1);
         GridLayout.LayoutParams buttonLayoutPararms = new GridLayout.LayoutParams(buttonRowSpec, buttonColSpec);
         doneButton.setLayoutParams(buttonLayoutPararms);
