@@ -21,7 +21,7 @@ public class NoteActLayout extends GridLayout {
         EditText titleEditText = new EditText(context);
         titleEditText.setHint("Note title");
         titleEditText.setId(R.id.titleEditText);
-        GridLayout.Spec titleRowSpec = GridLayout.spec(0,1,1);
+        GridLayout.Spec titleRowSpec = GridLayout.spec(0,1,0);
         GridLayout.Spec titleColSpec = GridLayout.spec(0,1,5);
         GridLayout.LayoutParams titleLayoutParams = new GridLayout.LayoutParams(titleRowSpec, titleColSpec);
         titleEditText.setLayoutParams(titleLayoutParams);
@@ -30,12 +30,13 @@ public class NoteActLayout extends GridLayout {
         //Spinner component
         Spinner label = new Spinner(context);
         label.setId(R.id.labelSpinner);
-        GridLayout.Spec labelRowSpec = GridLayout.spec(0,1,1);
+        GridLayout.Spec labelRowSpec = GridLayout.spec(0,1,0);
         GridLayout.Spec labelColSpec = GridLayout.spec(1,1,1);
         GridLayout.LayoutParams spinnerLayoutParams = new GridLayout.LayoutParams(labelRowSpec, labelColSpec);
         label.setLayoutParams(spinnerLayoutParams);
         addView(label);
 
+        //Adds options to choose from in spinner drop down
         List<String> spinnerOptions =  new ArrayList<String>();
         spinnerOptions.add("Personal");
         spinnerOptions.add("School");

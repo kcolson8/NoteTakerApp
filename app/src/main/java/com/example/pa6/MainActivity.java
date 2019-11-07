@@ -26,6 +26,7 @@ static final int EDIT_NOTE_REQUEST_CODE = 2;
 List <Note> myNotes = new ArrayList<Note>();
 ArrayAdapter<Note> arrayAdapter;
 ListView noteListView;
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -37,11 +38,10 @@ ListView noteListView;
             String noteContent = data.getStringExtra("noteContent");
 
             myNotes.add(new Note(title, label, noteContent));
-
             noteListView = (ListView) findViewById(R.id.noteListView);
-            ArrayAdapter<Note> arrayAdapter = new ArrayAdapter<Note>(
+            arrayAdapter = new ArrayAdapter<Note>(
                     this,
-                    android.R.layout.simple_list_item_1, // the view for each item as a row in the listview
+                    android.R.layout.simple_list_item_1,
                     myNotes // data source
             );
             noteListView.setAdapter(arrayAdapter);
@@ -68,7 +68,7 @@ ListView noteListView;
         noteListView = (ListView) findViewById(R.id.noteListView);
         arrayAdapter = new ArrayAdapter<Note>(
                 this,
-                android.R.layout.simple_list_item_1, // the view for each item as a row in the listview
+                android.R.layout.simple_list_item_1,
                 myNotes // data source
         );
         noteListView.setAdapter(arrayAdapter);
@@ -101,12 +101,8 @@ ListView noteListView;
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                //TODO
-                                //myNotes.remove(which); //crashes app
                                 myNotes.remove(myNotes.get(position));
-                                //arrayAdapter.remove(myNotes.get(position)); //crashes app
                                 arrayAdapter.notifyDataSetChanged();
-                                Toast.makeText(MainActivity.this, "removed note titled '" + selection + "'", Toast.LENGTH_SHORT).show();
                             }
                         })
                         .setNegativeButton("No", null);
@@ -115,7 +111,5 @@ ListView noteListView;
                 return true;
             }
         });
-        arrayAdapter.notifyDataSetChanged();
-
     }
 }
