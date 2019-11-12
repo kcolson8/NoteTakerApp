@@ -17,18 +17,6 @@ public class MainActLayout extends GridLayout {
 
         setColumnCount(1);
 
-        //Button component
-        Button addNoteButton = new Button(context);
-        addNoteButton.setId(R.id.newNoteButton);
-        addNoteButton.setText("Add new note");
-
-        //button layout
-        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-        layoutParams.height = LayoutParams.WRAP_CONTENT;
-        layoutParams.width = LayoutParams.MATCH_PARENT;
-        addNoteButton.setLayoutParams(layoutParams);
-        addView(addNoteButton);
-
 
         //ListView component
         ListView noteListView = new ListView(context);
