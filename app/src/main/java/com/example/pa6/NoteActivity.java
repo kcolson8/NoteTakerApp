@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -13,7 +14,8 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 public class NoteActivity extends AppCompatActivity {
-
+    int id;
+    static final String TAG = "NATag";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,6 +31,7 @@ public class NoteActivity extends AppCompatActivity {
         //grabs intent when editing a note to set title, label, and content as user last set it
         Intent intent = getIntent();
         if(intent != null){
+            id = intent.getIntExtra("id",0);
             String title = intent.getStringExtra("title");
             String label = intent.getStringExtra("label");
             String content = intent.getStringExtra("content");
@@ -51,6 +54,8 @@ public class NoteActivity extends AppCompatActivity {
                     Toast.makeText(NoteActivity.this, "Missing note content", Toast.LENGTH_SHORT).show();
                 } else { //both the note title and content have been entered
                     Intent intent = new Intent();
+                    intent.putExtra("id", id);
+                    Log.d(TAG, "returning id: " + id);
                     intent.putExtra("title", titleEditText.getText().toString());
                     intent.putExtra("label", labelSpinner.getSelectedItem().toString());
                     intent.putExtra("noteContent", contentEditText.getText().toString());

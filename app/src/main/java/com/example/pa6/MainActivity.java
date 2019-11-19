@@ -7,8 +7,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,6 +21,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -27,34 +30,61 @@ import java.util.List;
 import static java.lang.Integer.parseInt;
 import static java.lang.Integer.valueOf;
 
-
 public class MainActivity extends AppCompatActivity {
 
 static  final int NEW_NOTE_REQUEST_CODE = 1;
 static final int EDIT_NOTE_REQUEST_CODE = 2;
-List <Note> myNotes = new ArrayList<Note>();
-ArrayAdapter<Note> arrayAdapter;
+SimpleCursorAdapter cursorAdapter;
 ListView noteListView;
+
+static final String TAG =  "MATag";
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         //adds note contents from NoteActivity to be displayed in ListView
-        if((requestCode == NEW_NOTE_REQUEST_CODE || requestCode == EDIT_NOTE_REQUEST_CODE) && resultCode == RESULT_OK) {
+        if(requestCode == NEW_NOTE_REQUEST_CODE && resultCode == RESULT_OK) {
             String title = data.getStringExtra("title");
             String label = data.getStringExtra("label");
             String noteContent = data.getStringExtra("noteContent");
 
-            myNotes.add(new Note(title, label, noteContent));
+            NoteOpenHelper openHelper = new NoteOpenHelper(this);
+            openHelper.insertNote(new Note(title, label, noteContent));
+
             noteListView = (ListView) findViewById(R.id.noteListView);
-            arrayAdapter = new ArrayAdapter<Note>(
+
+            cursorAdapter = new SimpleCursorAdapter(
                     this,
-                    android.R.layout.simple_list_item_1,
-                    myNotes // data source
+                    android.R.layout.simple_list_item_activated_1,
+                    openHelper.getSelectAllNotesCursor(),
+                    new String[] {NoteOpenHelper.TITLE}, //first column in database
+                    new int[] {android.R.id.text1}, //id of text view to put data into
+                    0
             );
-            noteListView.setAdapter(arrayAdapter);
-       }
+            noteListView.setAdapter(cursorAdapter);
+        } //updates an existing note that was edited
+        else if(requestCode == EDIT_NOTE_REQUEST_CODE && resultCode == RESULT_OK){
+            int noteId = data.getIntExtra("id",0);
+            String title = data.getStringExtra("title");
+            String label = data.getStringExtra("label");
+            String noteContent = data.getStringExtra("noteContent");
+
+            NoteOpenHelper openHelper = new NoteOpenHelper(this);
+            openHelper.updateNoteById(noteId, new Note(title, label, noteContent));
+
+            noteListView = (ListView) findViewById(R.id.noteListView);
+
+            cursorAdapter = new SimpleCursorAdapter(
+                    this,
+                    android.R.layout.simple_list_item_activated_1,
+                    openHelper.getSelectAllNotesCursor(),
+                    new String[] {NoteOpenHelper.TITLE}, //first column in database
+                    new int[] {android.R.id.text1}, //id of text view to put data into
+                    0
+            );
+            noteListView.setAdapter(cursorAdapter);
+        }
     }
 
     @Override
@@ -63,65 +93,40 @@ ListView noteListView;
         final MainActLayout myGridLayout = new MainActLayout(this);
         setContentView(myGridLayout);
 
-        //Click listener for button, if clicked, takes user to new screen to create a note
-       /* Button newNoteButton = (Button) findViewById(R.id.newNoteButton);
-        newNoteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, NoteActivity.class);
-                startActivityForResult(intent, NEW_NOTE_REQUEST_CODE);
-            }
-        });
-        */
-        //adapter for arrayList and listView
         noteListView = (ListView) findViewById(R.id.noteListView);
-        arrayAdapter = new ArrayAdapter<Note>(
+        final NoteOpenHelper openHelper = new NoteOpenHelper(this);
+
+        //adapter for cursor and listView
+        cursorAdapter = new SimpleCursorAdapter(
                 this,
-                android.R.layout.simple_list_item_1,
-                myNotes // data source
+                android.R.layout.simple_list_item_activated_1,
+                openHelper.getSelectAllNotesCursor(),
+                new String[] {NoteOpenHelper.TITLE}, //first column in database
+                new int[] {android.R.id.text1}, //id of text view to put data into
+                0
         );
-        noteListView.setAdapter(arrayAdapter);
+        noteListView.setAdapter(cursorAdapter);
 
         //When item in listView is clicked, the app opens NoteActivity to exit the existing note
         //that the user clicked on
         noteListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selection = parent.getItemAtPosition(position).toString();
+                int noteId = (int) noteListView.getItemIdAtPosition(position);
+                Log.d(TAG, "id: " + noteId);
+
                 Intent intent = new Intent(MainActivity.this, NoteActivity.class);
-                intent.putExtra("title", selection);
-                intent.putExtra("label", myNotes.get(position).getLabel());
-                intent.putExtra("content", myNotes.get(position).getContent());
-                myNotes.remove(myNotes.get(position));
+
+                Note selectedNote = openHelper.getSelectOneNoteCursor(id);
+
+                intent.putExtra("id", noteId);
+                intent.putExtra("title", selectedNote.getTitle());
+                intent.putExtra("label", selectedNote.getLabel());
+                intent.putExtra("content", selectedNote.getContent());
+                //openHelper.deleteNote(noteId);
                 startActivityForResult(intent, EDIT_NOTE_REQUEST_CODE);
             }
         });
-
-        //When item in listView is long clicked, alert dialog pops up to ask user if they would like
-        //to delete the selected item or not
-        /*
-        noteListView.setLongClickable(true);
-        noteListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
-                final String selection = parent.getItemAtPosition(position).toString();
-                final AlertDialog.Builder alertBuilder = new AlertDialog.Builder(MainActivity.this);
-                alertBuilder.setTitle("Delete a note")
-                        .setMessage("Would you like to delete your note titled '" + selection + "'?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                myNotes.remove(myNotes.get(position));
-                                arrayAdapter.notifyDataSetChanged();
-                            }
-                        })
-                        .setNegativeButton("No", null);
-                alertBuilder.show();
-                arrayAdapter.notifyDataSetChanged();
-                return true;
-            }
-        });
-        */
 
         noteListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         noteListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
@@ -147,16 +152,27 @@ ListView noteListView;
             @Override
             public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
                 //executes when user clicks a cam menu item
-                //needed for PA7
-                //task: switch on menu item id... try to show(log or toast) the
-                //indexes of the items that are checked
+                noteListView = (ListView) findViewById(R.id.noteListView);
+
                 switch (menuItem.getItemId()){
                     case R.id.deleteMenuItem:
-                        //hint for pA7
-                        String temp = noteListView.getCheckedItemPositions().toString();
-                        Toast.makeText(MainActivity.this, temp, Toast.LENGTH_SHORT).show();
-                        //myNotes.remove(myNotes.get(position)));
-                        //arrayAdapter.notifyDataSetChanged();
+                        SparseBooleanArray selectedItems = noteListView.getCheckedItemPositions();
+                        Log.d(TAG, "selected items size: " + selectedItems.size());
+                        for(int i = 0; i < selectedItems.size(); i++){
+                            int noteId = (int) noteListView.getItemIdAtPosition(selectedItems.keyAt(i));
+                            openHelper.deleteNote(noteId);
+                        }
+                        cursorAdapter = new SimpleCursorAdapter(
+                                MainActivity.this,
+                                android.R.layout.simple_list_item_activated_1,
+                                openHelper.getSelectAllNotesCursor(),
+                                new String[] {NoteOpenHelper.TITLE}, //first column in database
+                                new int[] {android.R.id.text1}, //id of text view to put data into
+                                0
+                        );
+                        noteListView.setAdapter(cursorAdapter);
+                        cursorAdapter.notifyDataSetChanged();
+
                         actionMode.finish(); //exit cam
                         return true;
                 }
@@ -184,17 +200,43 @@ ListView noteListView;
     }
 
     // override a callback that executes whenever an options menu action is clicked
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
+
+        noteListView = (ListView) findViewById(R.id.noteListView);
+        NoteOpenHelper openHelper = new NoteOpenHelper(this);
+
         switch (id) {
             case R.id.addMenuItem:
                 startEditItemActivity();
-                return true; // we have consumed/handled this click event
-            // task: finish remaining two cases
+                return true;
             case R.id.deleteMenuItem:
-                Toast.makeText(this, "TODO: delete", Toast.LENGTH_SHORT).show();
+                //delete all note items when main menu delete is hit
+
+                final AlertDialog.Builder alertBuilder = new AlertDialog.Builder(MainActivity.this);
+                alertBuilder.setTitle("Delete all")
+                        .setMessage("Are you sure you want to delete all notes?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                NoteOpenHelper openHelper = new NoteOpenHelper(MainActivity.this);
+                                openHelper.deleteAllNotes();
+                                cursorAdapter = new SimpleCursorAdapter(
+                                        MainActivity.this,
+                                        android.R.layout.simple_list_item_activated_1,
+                                        openHelper.getSelectAllNotesCursor(),
+                                        new String[] {NoteOpenHelper.TITLE}, //first column in database
+                                        new int[] {android.R.id.text1}, //id of text view to put data into
+                                        0
+                                );
+                                noteListView.setAdapter(cursorAdapter);
+                                cursorAdapter.notifyDataSetChanged();
+                            }
+                        })
+                        .setNegativeButton("No", null);
+                alertBuilder.show();
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -202,3 +244,4 @@ ListView noteListView;
     }
 
 }
+
